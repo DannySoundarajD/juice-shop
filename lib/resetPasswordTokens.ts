@@ -10,26 +10,26 @@ import { type UserModel } from '../models/user'
 import { createResetPasswordToken, getResetPasswordTokenExpiry } from './resetPasswordTokenUtils'
 
 export async function issueResetPasswordToken (user: UserModel, date = new Date()): Promise<ResetPasswordTokenModel> {
-  const token = createResetPasswordToken(user.email, date)
   const expiresAt = getResetPasswordTokenExpiry(date)
   const [entry] = await ResetPasswordTokenModel.findOrCreate({
-    where: { token },
+    where: {
+      UserId: user.id,
+      expiresAt
+    },
     defaults: {
       UserId: user.id,
-      token,
+      token: '',
       expiresAt
     }
   })
-  if (entry.expiresAt.getTime() !== expiresAt.getTime()) {
-    await entry.update({ expiresAt })
+  const token = createResetPasswordToken(user.email, entry.id, date)
+  if (entry.token !== token || entry.expiresAt.getTime() !== expiresAt.getTime()) {
+    await entry.update({ token, expiresAt })
   }
   return entry
 }
 
 export async function isValidResetPasswordToken (user: UserModel, token: string): Promise<boolean> {
-  if (token !== createResetPasswordToken(user.email)) {
-    return false
-  }
   const count = await ResetPasswordTokenModel.count({
     where: {
       UserId: user.id,

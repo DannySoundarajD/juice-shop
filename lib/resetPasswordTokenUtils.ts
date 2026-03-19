@@ -12,6 +12,10 @@ function padForZ85 (value: string): string {
   return remainder === 0 ? value : value.padEnd(value.length + (4 - remainder), ' ')
 }
 
+function encodeForResetPasswordToken (value: string): string {
+  return z85.encode(padForZ85(value))
+}
+
 export function formatResetPasswordTokenDate (date = new Date()): string {
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
@@ -19,10 +23,17 @@ export function formatResetPasswordTokenDate (date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
-export function createResetPasswordToken (email: string, date = new Date()): string {
-  const encodedEmail = z85.encode(padForZ85(email))
-  const encodedDate = z85.encode(padForZ85(formatResetPasswordTokenDate(date)))
-  return `${encodedEmail}${encodedDate}`
+export function createResetPasswordTokenPrefix (email: string): string {
+  return encodeForResetPasswordToken(email)
+}
+
+export function createResetPasswordTokenSuffix (date = new Date()): string {
+  return encodeForResetPasswordToken(formatResetPasswordTokenDate(date))
+}
+
+export function createResetPasswordToken (email: string, entryId: number, date = new Date()): string {
+  const encodedEntryId = encodeForResetPasswordToken(entryId.toString().padStart(4, '0'))
+  return `${createResetPasswordTokenPrefix(email)}${encodedEntryId}${createResetPasswordTokenSuffix(date)}`
 }
 
 export function getResetPasswordTokenExpiry (date = new Date()): Date {

