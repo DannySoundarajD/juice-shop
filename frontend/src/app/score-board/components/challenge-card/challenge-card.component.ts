@@ -7,6 +7,8 @@ import { MatTooltip } from '@angular/material/tooltip'
 import { NgClass } from '@angular/common'
 import { DifficultyStarsComponent } from '../difficulty-stars/difficulty-stars.component'
 import { SnackBarHelperService } from 'src/app/Services/snack-bar-helper.service'
+import jwtDecode from 'jwt-decode'
+import { roles } from 'src/app/roles'
 
 @Component({
   selector: 'challenge-card',
@@ -38,12 +40,6 @@ export class ChallengeCardComponent implements OnInit, OnChanges {
   @ViewChild('hintTooltip')
   public hintTooltip?: MatTooltip
 
-  @ViewChild('codingChallengeTooltip')
-  public codingChallengeTooltip?: MatTooltip
-
-  @Input()
-  public highlightCodingButton = false
-
   @Input()
   @HostBinding('attr.id')
   public challengeId?: string
@@ -71,18 +67,6 @@ export class ChallengeCardComponent implements OnInit, OnChanges {
       }
       this.previousHintsUnlocked = currentHintsUnlocked
     }
-
-    if (changes['highlightCodingButton']) {
-      if (changes['highlightCodingButton'].currentValue === true) {
-        queueMicrotask(() => {
-          setTimeout(() => {
-            this.codingChallengeTooltip?.show()
-          }, 1000)
-        })
-      } else if (changes['highlightCodingButton'].previousValue === true && changes['highlightCodingButton'].currentValue === false) {
-        this.codingChallengeTooltip?.hide()
-      }
-    }
   }
 
   copyPayload (event: MouseEvent) {
@@ -95,6 +79,56 @@ export class ChallengeCardComponent implements OnInit, OnChanges {
           this.snackBarHelperService.open('COPY_SUCCESS', 'confirmBar')
         })
       }
+    }
+  }
+
+  isDependencyMissing (tag: string): boolean {
+    if (!this.challenge.ChallengeDependencies) {
+      return false
+    }
+    const dependencyName = tag.substring('Requires '.length)
+    return this.challenge.ChallengeDependencies.some((dep) => dep.name === dependencyName && dep.missing)
+  }
+
+  getDependencyDocumentation (tag: string): string | null {
+    if (!this.challenge.ChallengeDependencies) {
+      return null
+    }
+    const dependencyName = tag.substring('Requires '.length)
+    const dependency = this.challenge.ChallengeDependencies.find((dep) => dep.name === dependencyName)
+    return dependency ? dependency.documentation : null
+  }
+
+  getDependency (tag: string) {
+    if (!this.challenge.ChallengeDependencies) {
+      return null
+    }
+    const dependencyName = tag.substring('Requires '.length)
+    return this.challenge.ChallengeDependencies.find((dep) => dep.name === dependencyName)
+  }
+
+  canOpenCodingChallenge (): boolean {
+    return this.challenge.solved === true ||
+      this.applicationConfiguration.challenges.codingChallengesEnabled === 'always' ||
+      this.isAdminForgedReviewDemoOverride()
+  }
+
+  private isAdminForgedReviewDemoOverride (): boolean {
+    if (this.challenge.key !== 'forgedReviewChallenge') {
+      return false
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      return false
+    }
+
+    try {
+      const payload = jwtDecode<{ data?: { role?: string } }>(token)
+      return payload?.data?.role === roles.admin
+    } catch (err) {
+      console.log(err)
+      return false
     }
   }
 }

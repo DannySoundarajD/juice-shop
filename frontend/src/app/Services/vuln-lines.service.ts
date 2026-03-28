@@ -6,6 +6,7 @@ import { catchError, map } from 'rxjs/operators'
 export interface result {
   verdict: boolean
   hint: string
+  adaptiveHint?: string
 }
 
 @Injectable({

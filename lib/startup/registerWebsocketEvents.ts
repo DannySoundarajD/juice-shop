@@ -8,6 +8,7 @@ import * as utils from '../utils'
 import { Server } from 'socket.io'
 import { notifications, challenges } from '../../data/datacache'
 import * as challengeUtils from '../challengeUtils'
+import * as adaptiveGuidance from '../adaptiveGuidance'
 import * as security from '../insecurity'
 
 let firstConnectedSocket: any = null
@@ -36,6 +37,14 @@ const registerWebsocketEvents = (server: any) => {
       if (i > -1) {
         notifications.splice(i, 1)
       }
+    })
+
+    socket.on('user connected', (token: string) => {
+      adaptiveGuidance.registerSocketForToken(socket.id, token)
+    })
+
+    socket.on('disconnect', () => {
+      adaptiveGuidance.unregisterSocket(socket.id)
     })
 
     socket.on('verifyLocalXssChallenge', (data: any) => {

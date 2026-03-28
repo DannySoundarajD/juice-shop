@@ -1,4 +1,5 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing'
+import { provideZoneChangeDetection } from '@angular/core'
 
 import { ChallengeCardComponent } from './challenge-card.component'
 import { type Config } from 'src/app/Services/configuration.service'
@@ -27,7 +28,8 @@ describe('ChallengeCard', () => {
 
   async function setup () {
     await TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot(), MatIconModule, MatTooltipModule, ChallengeCardComponent]
+      imports: [TranslateModule.forRoot(), MatIconModule, MatTooltipModule, ChallengeCardComponent],
+      providers: [provideZoneChangeDetection()]
     })
       .compileComponents()
 
@@ -123,5 +125,39 @@ describe('ChallengeCard', () => {
     await fixture.whenStable()
 
     expect((component as any).snackBarHelperService.open).not.toHaveBeenCalled()
+  })
+
+  it('should show adaptive guidance inside the challenge card', () => {
+    component.challenge = {
+      ...defaultChallenge,
+      adaptiveGuidance: {
+        message: 'Try interacting with one of your existing reviews and inspect the request that is sent when you edit it.',
+        level: 2
+      }
+    } as any
+
+    fixture.detectChanges()
+
+    expect(fixture.nativeElement.querySelector('.adaptive-guidance-row')?.textContent)
+      .toContain('Try interacting with one of your existing reviews')
+  })
+
+  it('should allow admin users to open the forged review coding challenge before solving it', () => {
+    const originalToken = localStorage.getItem('token')
+    localStorage.setItem('token', 'header.eyJkYXRhIjp7InJvbGUiOiJhZG1pbiJ9fQ.signature')
+    component.challenge = {
+      ...defaultChallenge,
+      key: 'forgedReviewChallenge',
+      solved: false,
+      hasCodingChallenge: true
+    } as any
+
+    expect(component.canOpenCodingChallenge()).toBeTrue()
+
+    if (originalToken) {
+      localStorage.setItem('token', originalToken)
+    } else {
+      localStorage.removeItem('token')
+    }
   })
 })

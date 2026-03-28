@@ -2,7 +2,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
 import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { type ComponentFixture, TestBed } from '@angular/core/testing'
 import { RouterTestingModule } from '@angular/router/testing'
-import { MatDialogModule } from '@angular/material/dialog'
 import { MatIconModule } from '@angular/material/icon'
 import { TranslateModule } from '@ngx-translate/core'
 import { of, throwError } from 'rxjs'
@@ -16,12 +15,11 @@ import { WarningCardComponent } from './components/warning-card/warning-card.com
 import { ScoreCardComponent } from './components/score-card/score-card.component'
 import { ScoreBoardComponent } from './score-board.component'
 import { ConfigurationService } from '../Services/configuration.service'
-import { CodeSnippetService } from '../Services/code-snippet.service'
 import { ChallengeService } from '../Services/challenge.service'
 import { type Challenge } from '../Models/challenge.model'
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { HintService } from '../Services/hint.service'
+import { SocketIoService } from '../Services/socket-io.service'
 
 // allows to easily create a challenge with some overwrites
 function createChallenge (challengeOverwrites: Partial<Challenge>): Challenge {
@@ -49,23 +47,23 @@ describe('ScoreBoardComponent', () => {
   let fixture: ComponentFixture<ScoreBoardComponent>
   let challengeService
   let hintService
-  let codeSnippetService
   let configService
+  let socketIoService
+  let mockSocket
 
   beforeEach(async () => {
     challengeService = jasmine.createSpyObj('ChallengeService', ['find'])
     hintService = jasmine.createSpyObj('HintService', ['getAll', 'put'])
-    codeSnippetService = jasmine.createSpyObj('CodeSnippetService', [
-      'challenges'
-    ])
     configService = jasmine.createSpyObj('ConfigurationService', [
       'getApplicationConfiguration'
     ])
+    mockSocket = jasmine.createSpyObj('Socket', ['on', 'off', 'emit'])
+    socketIoService = jasmine.createSpyObj('SocketIoService', ['socket'])
+    socketIoService.socket.and.returnValue(mockSocket)
     await TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot(),
         RouterTestingModule,
         MatProgressSpinnerModule,
-        MatDialogModule,
         MatIconModule,
         ScoreBoardComponent,
         HackingChallengeProgressScoreCardComponent,
@@ -74,13 +72,12 @@ describe('ScoreBoardComponent', () => {
         WarningCardComponent,
         ChallengesUnavailableWarningComponent,
         TutorialModeWarningComponent,
-        ScoreCardComponent,
-        BrowserAnimationsModule],
+        ScoreCardComponent],
       providers: [
         { provide: ChallengeService, useValue: challengeService },
         { provide: HintService, useValue: hintService },
-        { provide: CodeSnippetService, useValue: codeSnippetService },
         { provide: ConfigurationService, useValue: configService },
+        { provide: SocketIoService, useValue: socketIoService },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]
@@ -117,7 +114,6 @@ describe('ScoreBoardComponent', () => {
 
     hintService.getAll.and.returnValue(of([]))
 
-    codeSnippetService.challenges.and.returnValue(of(['challenge-2']))
     configService.getApplicationConfiguration.and.returnValue(
       of({
         challenges: {
@@ -210,5 +206,28 @@ describe('ScoreBoardComponent', () => {
         (challenge) => challenge.key === 'challenge-2'
       ).codingChallengeStatus
     ).toBe(2)
+  })
+
+  it('should attach adaptive guidance to the affected challenge card', (): void => {
+    expect(
+      component.filteredChallenges.find(
+        (challenge) => challenge.key === 'challenge-2'
+      ).adaptiveGuidance
+    ).toBeUndefined()
+
+    component.onAdaptiveGuidanceWebsocket({
+      challengeKey: 'challenge-2',
+      message: 'Try interacting with one of your existing reviews and inspect the request that is sent when you edit it.',
+      level: 2
+    })
+
+    expect(
+      component.filteredChallenges.find(
+        (challenge) => challenge.key === 'challenge-2'
+      ).adaptiveGuidance
+    ).toEqual({
+      message: 'Try interacting with one of your existing reviews and inspect the request that is sent when you edit it.',
+      level: 2
+    })
   })
 })

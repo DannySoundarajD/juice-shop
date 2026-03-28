@@ -22,6 +22,29 @@ interface VerdictRequestBody {
   key: ChallengeKey
 }
 
+const getAdaptiveFindItHint = (key: ChallengeKey, selectedLines: number[] = []) => {
+  if (key !== 'forgedReviewChallenge') {
+    return undefined
+  }
+
+  const hasUserLine = selectedLines.includes(3)
+  const hasQueryLine = selectedLines.includes(4)
+
+  if (selectedLines.length === 1 && hasUserLine) {
+    return 'Good instinct — authentication is involved here. But the vulnerability is not just about retrieving the user, it\'s about how this function uses that information afterward.'
+  }
+
+  if (selectedLines.length === 1 && hasQueryLine) {
+    return 'You\'re looking in the right area. Consider how this entire update operation is structured and whether user ownership is enforced.'
+  }
+
+  if (selectedLines.length > 0) {
+    return 'Think about how this function handles authorization overall, not just individual lines.'
+  }
+
+  return undefined
+}
+
 const setStatusCode = (error: any) => {
   switch (error.name) {
     case 'BrokenBoundary':
@@ -85,18 +108,20 @@ export const checkVulnLines = () => async (req: Request<Record<string, unknown>,
   const neutralLines: number[] = snippetData.neutralLines
   const selectedLines: number[] = req.body.selectedLines
   const verdict = getVerdict(vulnLines, neutralLines, selectedLines)
+  const currentAttempt = accuracy.getFindItAttempts(key)
   let hint
+  const adaptiveHint = getAdaptiveFindItHint(key, selectedLines)
   if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
     const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
     if (codingChallengeInfos?.hints) {
-      if (accuracy.getFindItAttempts(key) > codingChallengeInfos.hints.length) {
+      if (currentAttempt > codingChallengeInfos.hints.length) {
         if (vulnLines.length === 1) {
           hint = res.__('Line {{vulnLine}} is responsible for this vulnerability or security flaw. Select it and submit to proceed.', { vulnLine: vulnLines[0].toString() })
         } else {
           hint = res.__('Lines {{vulnLines}} are responsible for this vulnerability or security flaw. Select them and submit to proceed.', { vulnLines: vulnLines.toString() })
         }
       } else {
-        const nextHint = codingChallengeInfos.hints[accuracy.getFindItAttempts(key) - 1] // -1 prevents after first attempt
+        const nextHint = codingChallengeInfos.hints[currentAttempt - 1] // -1 prevents after first attempt
         if (nextHint) hint = res.__(nextHint)
       }
     }
@@ -110,7 +135,8 @@ export const checkVulnLines = () => async (req: Request<Record<string, unknown>,
     accuracy.storeFindItVerdict(key, false)
     res.status(200).json({
       verdict: false,
-      hint
+      hint,
+      adaptiveHint
     })
   }
 }

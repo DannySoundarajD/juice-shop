@@ -53,6 +53,22 @@ interface VerdictRequestBody {
   selectedFix: number
 }
 
+const getAdaptiveFixItHint = (key: ChallengeKey, selectedFix: number) => {
+  if (key !== 'forgedReviewChallenge') {
+    return undefined
+  }
+
+  if (selectedFix === 0) {
+    return 'This fix uses the authenticated user, but it changes authorship instead of enforcing ownership. The safer direction is to restrict which review document can be updated.'
+  }
+
+  if (selectedFix === 2) {
+    return 'This fix addresses multi-update behavior, which helps with a different issue. The forged review problem is still about preventing users from editing reviews they do not own.'
+  }
+
+  return 'Focus on making the update query enforce ownership instead of only changing written data or reducing batch behavior.'
+}
+
 export const serveCodeFixes = () => (req: Request<FixesRequestParams, Record<string, unknown>, Record<string, unknown>>, res: Response, next: NextFunction) => {
   const key = req.params.key
   const fixData = readFixes(key)
@@ -77,6 +93,7 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
+    const adaptiveHint = getAdaptiveFixItHint(key, selectedFix)
     if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
       const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
       const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
@@ -92,7 +109,8 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
       accuracy.storeFixItVerdict(key, false)
       res.status(200).json({
         verdict: false,
-        explanation
+        explanation,
+        adaptiveHint
       })
     }
   }

@@ -115,6 +115,25 @@
   }
 }
 
+.adaptive-guidance-row {
+  align-items: flex-start;
+  background: rgba(129, 199, 132, 0.12);
+  border-left: 3px solid var(--theme-accent);
+  color: var(--theme-text);
+  column-gap: $space-2xs;
+  display: grid;
+  grid-template-columns: min-content auto;
+  margin-top: $space-s;
+  padding: $space-2xs;
+
+  mat-icon {
+    color: var(--theme-accent);
+    font-size: 14px;
+    height: 14px;
+    width: 14px;
+  }
+}
+
 .bottom-row {
   align-items: end;
   column-gap: $space-2xs;
@@ -131,12 +150,26 @@
   .tag {
     background: #3d3d3d;
     border-radius: 1.82849px;
-    color: #5fc091;
+    color: var(--theme-text-dark);
     font-size: 10px;
     font-style: normal;
     font-weight: 400;
     line-height: 14px;
     padding: $space-2xs;
+  }
+
+  .tag.tag-missing-dependency {
+    color: var(--theme-warn);
+  }
+
+  .tag.tag-available-dependency {
+    color: var(--theme-accent);
+  }
+
+  .tag .dependency-icon {
+    font-size: 10px;
+    height: 10px;
+    width: 10px;
   }
 }
 
@@ -155,7 +188,6 @@ $badge-size: 24px;
 
   border-radius: calc($badge-size / 2);
   color: var(--theme-text) !important;
-  color: var(--theme-text);
   cursor: pointer;
 
   display: flex;
@@ -217,22 +249,4 @@ $badge-size: 24px;
   }
 }
 
-.badge.not-completable.flickering {
-  animation: coding-button-flicker 0.7s ease-in-out infinite;
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-accent) 90%, transparent);
-}
 
-@keyframes coding-button-flicker {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-accent) 90%, transparent);
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    box-shadow: 0 0 20px 10px color-mix(in srgb, var(--theme-accent) 90%, transparent);
-    opacity: 0.85;
-    transform: scale(1.08);
-  }
-}

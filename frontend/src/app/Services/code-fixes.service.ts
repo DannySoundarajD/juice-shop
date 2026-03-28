@@ -6,6 +6,8 @@ import { type Observable } from 'rxjs'
 
 export interface result {
   verdict: boolean
+  explanation?: string
+  adaptiveHint?: string
 }
 
 export interface Fixes {

@@ -7,4 +7,8 @@ export interface EnrichedChallenge extends Challenge {
   hintsUnlocked: number
   hintsAvailable: number
   tagList: string[]
+  adaptiveGuidance?: {
+    message: string
+    level: number
+  }
 }
