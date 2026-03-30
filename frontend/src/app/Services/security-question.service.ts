@@ -23,7 +23,21 @@ export class SecurityQuestionService {
 
   findBy (email: string) {
     return this.http.get(this.hostServer + '/' + 'rest/user/security-question?email=' + email).pipe(
-      map((response: any) => response.question),
+      map((response: any) => {
+        if (response?.mode === 'token') {
+          return { mode: 'token' }
+        }
+        if (typeof response?.question === 'string') {
+          return response.question
+        }
+        if (response?.question != null) {
+          return {
+            ...response.question,
+            mode: response.mode ?? 'question'
+          }
+        }
+        return response
+      }),
       catchError((error) => { throw error })
     )
   }

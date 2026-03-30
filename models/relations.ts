@@ -11,6 +11,7 @@ import { PrivacyRequestModel } from './privacyRequests'
 import { ProductModel } from './product'
 import { QuantityModel } from './quantity'
 import { RecycleModel } from './recycle'
+import { ResetPasswordTokenModel } from './resetPasswordToken'
 import { SecurityAnswerModel } from './securityAnswer'
 import { SecurityQuestionModel } from './securityQuestion'
 import { UserModel } from './user'
@@ -125,6 +126,12 @@ const relationsInit = (_sequelize: Sequelize) => {
       name: 'UserId'
     }
   })
+  ResetPasswordTokenModel.belongsTo(UserModel, {
+    constraints: false,
+    foreignKey: {
+      name: 'UserId'
+    }
+  }) // keep legacy backup rows queryable without introducing a startup-breaking FK cycle
   SecurityAnswerModel.belongsTo(SecurityQuestionModel, {
     constraints: true,
     foreignKeyConstraint: true,

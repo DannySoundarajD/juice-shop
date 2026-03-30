@@ -33,6 +33,7 @@ import { ordersCollection, reviewsCollection } from './mongodb'
 import { AllHtmlEntities as Entities } from 'html-entities'
 import * as datacache from './datacache'
 import * as security from '../lib/insecurity'
+import { seedResetPasswordTokens } from '../lib/resetPasswordTokens'
 // @ts-expect-error FIXME due to non-existing type definitions for replace
 import replace from 'replace'
 
@@ -44,6 +45,7 @@ export default async () => {
     createUsers,
     createChallenges,
     createRandomFakeUsers,
+    createResetPasswordTokens,
     createProducts,
     createBaskets,
     createBasketItems,
@@ -167,6 +169,10 @@ async function createWallet () {
       })
     })
   )
+}
+
+async function createResetPasswordTokens () {
+  await seedResetPasswordTokens()
 }
 
 async function createDeliveryMethods () {
