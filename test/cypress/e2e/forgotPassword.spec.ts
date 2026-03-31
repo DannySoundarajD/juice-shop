@@ -128,7 +128,7 @@ describe('/#/forgot-password', () => {
       cy.task<string>('GetFromConfig', 'application.domain').then(
         (appDomain: string) => {
           const adminEmail = `admin@${appDomain}`
-          const newPassword = 'Adm1nRes3t!'
+          const newPassword = 'admin123' // Keep original password for subsequent tests
 
           cy.get('#email').type(adminEmail)
           cy.wait('@securityQuestion')
