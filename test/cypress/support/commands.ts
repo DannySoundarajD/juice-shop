@@ -46,6 +46,7 @@ Cypress.Commands.add(
     cy.get('#password').type(context.password)
     cy.get('#loginButton').click()
     cy.window().should((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       expect(win.localStorage.getItem('token')).to.not.be.null
     })
     cy.wait(500)
@@ -54,13 +55,13 @@ Cypress.Commands.add(
 
 function walkRecursivelyInArray (arr: number[], cb: any, index = 0) {
   if (arr.length === 0) return
-  const ret = cb(index, arr.shift());
+  const ret = cb(index, arr.shift())
   // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-  ((ret && ret.chainerId) ? ret : cy.wrap(ret))
-    .then((ret: boolean) => {
-      if (!ret) return
-      walkRecursivelyInArray(arr, cb, index + 1)
-    })
+  const chain = (ret && ret.chainerId) ? ret : cy.wrap(ret)
+  chain.then((ret: boolean) => {
+    if (!ret) return
+    walkRecursivelyInArray(arr, cb, index + 1)
+  })
 }
 
 Cypress.Commands.add('eachSeries', { prevSubject: 'optional' } as any, (arrayGenerated: number[], checkFnToBeRunOnEach: any) => {
