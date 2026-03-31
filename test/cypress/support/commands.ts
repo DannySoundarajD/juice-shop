@@ -45,6 +45,9 @@ Cypress.Commands.add(
     }
     cy.get('#password').type(context.password)
     cy.get('#loginButton').click()
+    cy.window().should((win) => {
+      expect(win.localStorage.getItem('token')).to.not.be.null
+    })
     cy.wait(500)
   }
 )
